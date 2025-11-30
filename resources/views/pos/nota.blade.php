@@ -201,7 +201,7 @@
             </div>
             <div>
                 <span>Kasir:</span>
-                <span>{{ $transaksi->kasir ?? 'KASIR 7' }}</span>
+                <span>{{ strtoupper($transaksi->kasir) }}</span>
             </div>
             <div>
                 <span>Nomor:</span>

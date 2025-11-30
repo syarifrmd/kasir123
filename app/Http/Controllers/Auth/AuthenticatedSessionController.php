@@ -28,7 +28,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+    // Arahkan ke halaman POS setelah login, atau ke halaman yang sebelumnya diminta
+    return redirect()->intended(route('pos.index'));
     }
 
     /**

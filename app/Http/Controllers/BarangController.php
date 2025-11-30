@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\DB;
-use App\Models\TransaksiItem;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 
 class BarangController extends Controller
@@ -261,7 +261,7 @@ class BarangController extends Controller
             ->whereNotIn('id', $existingIds)
             ->each(function($item) {
                 // Check if varian has transactions
-                $hasTransactions = TransaksiItem::where('barang_id', $item->id)->exists();
+                $hasTransactions = Transaksi::where('barang_id', $item->id)->exists();
                 if (!$hasTransactions) {
                     $item->delete();
                 }
@@ -325,7 +325,7 @@ class BarangController extends Controller
     public function destroy(Barang $barang)
     {
         // Check if this item has transactions
-        $hasTransactions = TransaksiItem::where('barang_id', $barang->id)->exists();
+        $hasTransactions = Transaksi::where('barang_id', $barang->id)->exists();
         
         if ($hasTransactions) {
             return redirect()

@@ -16,10 +16,24 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Default pegawai (admin kasir) untuk login awal
+        User::updateOrCreate(
+            ['email' => 'admin@kasir.local'],
+            [
+                'name' => 'Admin Kasir',
+                'password' => bcrypt('password123'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'pegawai@kasir.local'],
+            [
+                'name' => 'Pegawai Kasir',
+                'password' => bcrypt('password123'),
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Seed initial barang data
         $this->call([

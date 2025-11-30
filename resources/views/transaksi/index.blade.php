@@ -5,6 +5,22 @@
         <h1 class="text-xl font-semibold">Data Transaksi</h1>
         <a href="{{ route('transaksi.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded text-sm">Tambah</a>
     </div>
+
+    <!-- Filter transaksi berdasarkan tanggal -->
+
+    <div class="mb-4">
+        <form method="GET" action="{{ route('transaksi.index') }}" class="flex items-center gap-2 text-sm">
+            <label for="start" class="font-medium">Filter Tanggal:</label>
+            <input type="date" id="start" name="start" value="{{ request('start') }}" class="border rounded px-2 py-1">
+            <span>-</span>
+            <input type="date" id="end" name="end" value="{{ request('end') }}" class="border rounded px-2 py-1">
+            <button class="px-3 py-1.5 rounded bg-blue-600 text-white">Terapkan</button>
+            @if(request('start') || request('end'))
+                <a href="{{ route('transaksi.index') }}" class="px-3 py-1.5 rounded bg-gray-200 text-gray-800">Reset</a>
+            @endif
+        </form>
+
+    </div>
     <div class="overflow-x-auto bg-white shadow rounded">
         <table class="min-w-full text-sm">
             <thead class="bg-gray-50">

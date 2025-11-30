@@ -77,8 +77,20 @@
             <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
                 <button class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded bg-orange-600 text-white" onclick="document.body.classList.toggle('show-mobile-nav')">☰</button>
                 <h2 class="font-semibold tracking-wide text-sm text-gray-600">@yield('title','Kasir')</h2>
-                <div class="ml-auto flex items-center gap-3 text-xs text-gray-500">
-                    <span>{{ now()->format('d M Y') }}</span>
+                <div class="ml-auto flex items-center gap-3 text-xs text-gray-600">
+                    <span class="hidden sm:inline">{{ now()->format('d M Y') }}</span>
+                    @auth
+                        <div class="flex items-center gap-2 px-3 py-1 rounded bg-orange-50 border border-orange-200">
+                            <span class="text-orange-700 font-semibold">{{ auth()->user()->name }}</span>
+                            <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Logout?')">
+                                @csrf
+                                <button class="text-[10px] text-orange-600 hover:text-orange-800">Logout</button>
+                            </form>
+                        </div>
+                    @endauth
+                    @guest
+                        <a href="{{ route('login') }}" class="px-3 py-1 rounded bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100">Login</a>
+                    @endguest
                 </div>
             </div>
         </header>

@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang;
 use App\Models\Transaksi;
-use App\Models\TransaksiItem;
-use App\Models\StockBatch;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,40 +13,39 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // Date range filter (default: last 30 days)
         $startDate = $request->input('start_date', Carbon::now()->subDays(30)->format('Y-m-d'));
-        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        $endDate   = $request->input('end_date', Carbon::now()->format('Y-m-d'));
 
-        // KPI Cards
+        // Total revenue dari subtotal
         $totalRevenue = Transaksi::whereBetween('tanggal_transaksi', [$startDate, $endDate])
-            ->sum('total_harga');
+            ->sum('subtotal');
 
-        $totalProfit = TransaksiItem::whereHas('transaksi', function($q) use ($startDate, $endDate) {
-                $q->whereBetween('tanggal_transaksi', [$startDate, $endDate]);
-            })
-            ->sum('profit');
+        // Sementara: profit = totalRevenue (tidak ada HPP detail)
+        $totalProfit = $totalRevenue;
 
-        $totalTransactions = Transaksi::whereBetween('tanggal_transaksi', [$startDate, $endDate])->count();
+        // Total transaksi (nota) = jumlah kode_transaksi unik
+        $totalTransactions = Transaksi::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->distinct('kode_transaksi')
+            ->count('kode_transaksi');
 
+        // Total nilai stok
         $totalStockValue = Barang::sum(DB::raw('stok_barang * harga_barang'));
 
-        // Low Stock Alert (stok < 10)
-        $lowStock = Barang::where('stok_barang', '<', 10)->where('stok_barang', '>', 0)->count();
-        $outOfStock = Barang::where('stok_barang', '<=', 0)->count();
+        $lowStock  = Barang::where('stok_barang', '<', 10)->where('stok_barang', '>', 0)->count();
+        $outOfStock= Barang::where('stok_barang', '<=', 0)->count();
 
-        // Profit Trend (daily for selected period)
-        $profitTrend = TransaksiItem::select(
-                DB::raw('DATE(transaksi.tanggal_transaksi) as date'),
-                DB::raw('SUM(transaksi_items.profit) as total_profit'),
-                DB::raw('SUM(transaksi_items.subtotal) as total_revenue')
+        // Profit trend per hari
+        $profitTrend = Transaksi::select(
+                DB::raw('DATE(tanggal_transaksi) as date'),
+                DB::raw('SUM(subtotal) as total_revenue'),
+                DB::raw('SUM(subtotal) as total_profit')
             )
-            ->join('transaksi', 'transaksi_items.transaksi_id', '=', 'transaksi.id')
-            ->whereBetween('transaksi.tanggal_transaksi', [$startDate, $endDate])
+            ->whereBetween('tanggal_transaksi', [$startDate, $endDate])
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
-        // Stock by Category
+        // Stock by category
         $stockByCategory = Barang::select(
                 'kategori',
                 DB::raw('SUM(stok_barang) as total_stok'),
@@ -58,37 +55,34 @@ class DashboardController extends Controller
             ->groupBy('kategori')
             ->get();
 
-        // Revenue by Category
-        $revenueByCategory = TransaksiItem::select(
+        // Revenue by category
+        $revenueByCategory = Transaksi::select(
                 'barang.kategori',
-                DB::raw('SUM(transaksi_items.subtotal) as total_revenue'),
-                DB::raw('SUM(transaksi_items.profit) as total_profit')
+                DB::raw('SUM(transaksi.subtotal) as total_revenue'),
+                DB::raw('SUM(transaksi.subtotal) as total_profit')
             )
-            ->join('barang', 'transaksi_items.barang_id', '=', 'barang.id')
-            ->join('transaksi', 'transaksi_items.transaksi_id', '=', 'transaksi.id')
+            ->join('barang', 'transaksi.kode_barang', '=', 'barang.kode_barang')
             ->whereBetween('transaksi.tanggal_transaksi', [$startDate, $endDate])
             ->groupBy('barang.kategori')
             ->get();
 
-        // Top Products (by revenue)
-        $topProducts = TransaksiItem::select(
+        // Top products
+        $topProducts = Transaksi::select(
                 'barang.id',
                 'barang.merk',
                 'barang.jenis',
                 'barang.kategori',
-                DB::raw('SUM(transaksi_items.qty) as total_qty'),
-                DB::raw('SUM(transaksi_items.subtotal) as total_revenue'),
-                DB::raw('SUM(transaksi_items.profit) as total_profit')
+                DB::raw('SUM(transaksi.qty) as total_qty'),
+                DB::raw('SUM(transaksi.subtotal) as total_revenue'),
+                DB::raw('SUM(transaksi.subtotal) as total_profit')
             )
-            ->join('barang', 'transaksi_items.barang_id', '=', 'barang.id')
-            ->join('transaksi', 'transaksi_items.transaksi_id', '=', 'transaksi.id')
+            ->join('barang', 'transaksi.kode_barang', '=', 'barang.kode_barang')
             ->whereBetween('transaksi.tanggal_transaksi', [$startDate, $endDate])
             ->groupBy('barang.id', 'barang.merk', 'barang.jenis', 'barang.kategori')
             ->orderByDesc('total_revenue')
             ->limit(10)
             ->get();
 
-        // Recent Stock Movements
         $recentMovements = StockMovement::with(['barang', 'vendor'])
             ->latest()
             ->limit(10)

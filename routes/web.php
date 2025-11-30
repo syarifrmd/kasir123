@@ -10,25 +10,28 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [KasirController::class,'index'])->name('pos.index');
-Route::post('/pos/order', [KasirController::class,'store'])->name('pos.store');
-Route::get('/pos/nota/{id}', [KasirController::class,'nota'])->name('pos.nota');
+// Lindungi seluruh aplikasi dengan auth, kecuali route auth.*
+Route::middleware('auth')->group(function () {
+    Route::get('/', [KasirController::class,'index'])->name('pos.index');
+    Route::post('/pos/order', [KasirController::class,'store'])->name('pos.store');
+    Route::get('/pos/nota/{id}', [KasirController::class,'nota'])->name('pos.nota');
 
-// Dashboard
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-Route::resource('barang', BarangController::class)->except(['show']);
-Route::resource('transaksi', TransaksiController::class)->only(['index','create','store','destroy']);
-Route::resource('vendors', VendorController::class)->except(['show']);
+    Route::resource('barang', BarangController::class)->except(['show']);
+    Route::resource('transaksi', TransaksiController::class)->only(['index','create','store','destroy']);
+    Route::resource('vendors', VendorController::class)->except(['show']);
 
-// Stok management (public access per request)
-Route::get('/stok', [StokController::class,'index'])->name('stok.index');
-Route::get('/stok/tambah', [StokController::class,'create'])->name('stok.create');
-Route::post('/stok', [StokController::class,'store'])->name('stok.store');
-Route::get('/stok/{barang}', [StokController::class,'show'])->name('stok.show');
+    // Stok management
+    Route::get('/stok', [StokController::class,'index'])->name('stok.index');
+    Route::get('/stok/tambah', [StokController::class,'create'])->name('stok.create');
+    Route::post('/stok', [StokController::class,'store'])->name('stok.store');
+    Route::get('/stok/{barang}', [StokController::class,'show'])->name('stok.show');
 
-// Profit summary
-Route::get('/profit', [ProfitController::class,'index'])->name('profit.index');
+    // Profit summary
+    Route::get('/profit', [ProfitController::class,'index'])->name('profit.index');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
