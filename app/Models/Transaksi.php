@@ -14,6 +14,7 @@ class Transaksi extends Model
 
     protected $fillable = [
         'kode_transaksi',
+        'kode_barang',
         'tanggal_transaksi',
         'total_harga',
         'bayar_tunai',
@@ -22,6 +23,9 @@ class Transaksi extends Model
         'status_transaksi',
         'kasir',
         'nama_customer',
+        'qty',
+        'harga_satuan',
+        'subtotal',
     ];
 
     protected $casts = [

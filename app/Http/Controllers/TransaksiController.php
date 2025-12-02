@@ -5,16 +5,41 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class TransaksiController extends Controller
 {
     public function index(Request $request)
     {
-        // Sekarang cukup with('barang'), bukan items.barang lagi
-        $query = Transaksi::with('barang');
+        // Gunakan query dasar tanpa eager load relasi yang tidak tersedia
+        $query = Transaksi::query();
 
         $start = $request->input('start');
         $end   = $request->input('end');
+        $period = $request->input('period'); // harian|mingguan|bulanan|tahunan
+
+        // Quick period filter if provided
+        if (!$start && !$end && $period) {
+            $today = Carbon::today();
+            switch ($period) {
+                case 'harian':
+                    $start = $today->toDateString();
+                    $end   = $today->toDateString();
+                    break;
+                case 'mingguan':
+                    $start = $today->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
+                    $end   = $today->copy()->endOfWeek(Carbon::SUNDAY)->toDateString();
+                    break;
+                case 'bulanan':
+                    $start = $today->copy()->startOfMonth()->toDateString();
+                    $end   = $today->copy()->endOfMonth()->toDateString();
+                    break;
+                case 'tahunan':
+                    $start = $today->copy()->startOfYear()->toDateString();
+                    $end   = $today->copy()->endOfYear()->toDateString();
+                    break;
+            }
+        }
 
         // Filter tanggal fleksibel
         if ($start && $end) {
@@ -29,9 +54,43 @@ class TransaksiController extends Controller
         $query->orderBy('tanggal_transaksi', 'desc')
               ->orderBy('id', 'desc');
 
+        // Hitung ringkasan sebelum pagination
+        $totalOmset = $query->sum('total_harga');
+        $totalTransaksi = $query->count();
+
         $transaksi = $query->paginate(10)->withQueryString();
 
-        return view('transaksi.index', compact('transaksi'));
+        // Siapkan daftar items per kode_transaksi dari tabel transaksi legacy (satu baris per item)
+        $codes = $transaksi->getCollection()->pluck('kode_transaksi')->unique()->values()->all();
+        $itemsByTrx = collect();
+        if (!empty($codes)) {
+            $rows = Transaksi::select(
+                    'transaksi.kode_transaksi',
+                    'transaksi.kode_barang',
+                    'transaksi.qty',
+                    'transaksi.harga_satuan',
+                    'transaksi.subtotal',
+                    'barang.merk',
+                    'barang.jenis'
+                )
+                ->leftJoin('barang','barang.kode_barang','=','transaksi.kode_barang')
+                ->whereIn('transaksi.kode_transaksi', $codes)
+                ->orderBy('transaksi.id')
+                ->get()
+                ->map(function($item) {
+                    $item->nama_display = trim(($item->merk ?? '') . ' ' . ($item->jenis ?? ''));
+                    return $item;
+                })
+                ->groupBy('kode_transaksi');
+            $itemsByTrx = $rows;
+        }
+
+        return view('transaksi.index', [
+            'transaksi' => $transaksi,
+            'itemsByTrx' => $itemsByTrx,
+            'totalOmset' => $totalOmset,
+            'totalTransaksi' => $totalTransaksi,
+        ]);
     }
 
     public function create()

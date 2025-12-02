@@ -102,11 +102,12 @@ class BarangController extends Controller
         })->values();
 
         $vendors = Vendor::orderBy('nama')->get(['id','nama']);
+            // Removed kategoriList and kategoriMap as per the requirement
 
         return view('barang.index', [
             'barangGrouped' => $barangGrouped,
             'barangPaginated' => $barangPaginated,
-            'vendors' => $vendors,
+            'vendors' => $vendors
         ]);
     }
 
@@ -119,7 +120,6 @@ class BarangController extends Controller
     {
         $data = $request->validate([
             'kategori' => 'required|string|size:2|regex:/^[A-Z]{2}$/',
-            'kategori_nama' => 'nullable|string|max:50',
             'merk' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'varians' => 'required|array|min:1',
@@ -130,16 +130,15 @@ class BarangController extends Controller
             'varians.*.harga_barang' => 'required|integer|min:0',
             'varians.*.stok_barang' => 'required|integer|min:0',
             'varians.*.kode_barang_manual' => 'nullable|string|size:8',
-            // Optional initial stock batch for all varians
-            'init_stock' => 'nullable|boolean',
-            'vendor_init_id' => 'nullable|exists:vendors,id',
-            'vendor_init_baru' => 'nullable|string|max:100',
-            'vendor_init_kode' => 'nullable|string|max:20',
-            'vendor_init_alamat' => 'nullable|string|max:255',
-            'vendor_init_no_kontak' => 'nullable|string|max:30',
-            'vendor_init_nama_sales' => 'nullable|string|max:100',
-            'unit_cost_init' => 'nullable|numeric|min:0',
-            'harga_jual_baru_init' => 'nullable|numeric|min:0',
+            // Stock batch fields (otomatis create jika stok > 0)
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'vendor_baru' => 'nullable|string|max:100',
+            'vendor_kode' => 'nullable|string|max:20',
+            'vendor_alamat' => 'nullable|string|max:255',
+            'vendor_no_kontak' => 'nullable|string|max:30',
+            'vendor_nama_sales' => 'nullable|string|max:100',
+            'unit_cost' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string|max:255',
         ]);
 
         DB::transaction(function() use ($data, $request) {
@@ -151,16 +150,15 @@ class BarangController extends Controller
                 ->value('max_kode');
             $nextMerkCode = str_pad((string)(($latestKode ?? 0) + 1), 2, '0', STR_PAD_LEFT);
 
-            // Prepare vendor for initial stock
-            $initStock = (bool)($data['init_stock'] ?? false);
-            $vendorId = $data['vendor_init_id'] ?? null;
-            if ($initStock && !$vendorId && !empty($data['vendor_init_baru'])) {
+            // Prepare vendor (create if vendor_baru diisi)
+            $vendorId = $data['vendor_id'] ?? null;
+            if (!$vendorId && !empty($data['vendor_baru'])) {
                 $vendor = \App\Models\Vendor::create([
-                    'kode' => $data['vendor_init_kode'] ?? null,
-                    'nama' => $data['vendor_init_baru'],
-                    'alamat' => $data['vendor_init_alamat'] ?? null,
-                    'no_kontak' => $data['vendor_init_no_kontak'] ?? null,
-                    'nama_sales' => $data['vendor_init_nama_sales'] ?? null,
+                    'kode' => $data['vendor_kode'] ?? null,
+                    'nama' => $data['vendor_baru'],
+                    'alamat' => $data['vendor_alamat'] ?? null,
+                    'no_kontak' => $data['vendor_no_kontak'] ?? null,
+                    'nama_sales' => $data['vendor_nama_sales'] ?? null,
                 ]);
                 $vendorId = $vendor->id;
             }
@@ -187,19 +185,18 @@ class BarangController extends Controller
                     'deskripsi' => $data['deskripsi'] ?? null,
                 ]);
 
-                // Create initial batch if requested and stok > 0
-                if ($initStock && $b->stok_barang > 0 && $vendorId && isset($data['unit_cost_init'])) {
+                // Otomatis create stock batch & movement jika stok > 0
+                if ($b->stok_barang > 0) {
                     $batch = \App\Models\StockBatch::create([
                         'barang_id' => $b->id,
                         'vendor_id' => $vendorId,
                         'qty_received' => $b->stok_barang,
                         'qty_remaining' => $b->stok_barang,
-                        'unit_cost' => $data['unit_cost_init'],
-                        'sell_price_at_receive' => $data['harga_jual_baru_init'] ?? $b->harga_barang,
-                        'notes' => 'Initial stock saat buat barang',
+                        'unit_cost' => $data['unit_cost'] ?? 0,
+                        'sell_price_at_receive' => $b->harga_barang,
+                        'notes' => $data['notes'] ?? 'Stok awal saat tambah barang',
                     ]);
 
-                    // Movement log
                     \App\Models\StockMovement::create([
                         'barang_id' => $b->id,
                         'vendor_id' => $vendorId,
@@ -207,10 +204,10 @@ class BarangController extends Controller
                         'qty' => $b->stok_barang,
                         'before_stock' => 0,
                         'after_stock' => $b->stok_barang,
-                        'unit_cost' => $data['unit_cost_init'],
+                        'unit_cost' => $data['unit_cost'] ?? 0,
                         'unit_price' => $b->harga_barang,
                         'stock_batch_id' => $batch->id,
-                        'notes' => 'Initial stock saat buat barang',
+                        'notes' => $data['notes'] ?? 'Stok awal saat tambah barang',
                     ]);
                 }
             }
@@ -235,7 +232,6 @@ class BarangController extends Controller
     {
         $data = $request->validate([
             'kategori' => 'required|string|size:2|regex:/^[A-Z]{2}$/',
-            'kategori_nama' => 'nullable|string|max:50',
             'merk' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'varians' => 'required|array|min:1',

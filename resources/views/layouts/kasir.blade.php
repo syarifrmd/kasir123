@@ -44,6 +44,13 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ route('kategori.index') }}" class="group flex items-center gap-2 px-3 py-2 rounded transition {{ str_starts_with($current,'kategori.') ? 'bg-white/15 font-medium' : 'hover:bg-white/10' }}">
+                        <span class="w-2 h-2 rounded-full bg-white/70 group-hover:bg-white"></span>
+                        <span>Kategori</span>
+                    </a>
+                </li>
+                
+                <li>
                     <a href="{{ route('transaksi.index') }}" class="group flex items-center gap-2 px-3 py-2 rounded transition {{ str_starts_with($current,'transaksi.') ? 'bg-white/15 font-medium' : 'hover:bg-white/10' }}">
                         <span class="w-2 h-2 rounded-full bg-white/70 group-hover:bg-white"></span>
                         <span>Riwayat Transaksi</span>

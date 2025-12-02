@@ -31,7 +31,7 @@
             <label class="block text-xs font-medium mb-1">Kategori</label>
             <select name="kategori" class="w-full border rounded px-3 py-2 text-sm">
                 <option value="">Semua Kategori</option>
-                @foreach(\App\Models\Barang::KATEGORI as $k => $label)
+                @foreach(\App\Models\Barang::kategoriOptions() as $k => $label)
                     <option value="{{ $k }}" {{ request('kategori') == $k ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
@@ -104,7 +104,7 @@
                 <div class="flex-1">
                     <div class="flex items-center gap-3">
                         <span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 font-medium">
-                            {{ \App\Models\Barang::KATEGORI[$group['kategori']] ?? $group['kategori'] }}
+                            {{ \App\Models\Barang::kategoriOptions()[$group['kategori']] ?? $group['kategori'] }}
                         </span>
                         <h3 class="font-semibold text-base">{{ $group['merk'] }}</h3>
                         <span class="text-xs text-gray-500">({{ $group['varians']->count() }} varian)</span>

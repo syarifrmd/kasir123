@@ -32,6 +32,29 @@ class Barang extends Model
         'EK' => 'Elektronik',
     ];
 
+    public static function kategoriOptions(): array
+    {
+        $defaults = self::KATEGORI;
+        $path = storage_path('app/kategori.json');
+        if (is_file($path)) {
+            try {
+                $json = json_decode(file_get_contents($path), true) ?: [];
+                if (is_array($json)) {
+                    // Expect associative [kode => nama]
+                    foreach ($json as $k => $v) {
+                        if (is_string($k) && is_string($v) && preg_match('/^[A-Z]{2}$/', $k)) {
+                            $defaults[$k] = $v;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // ignore and use defaults
+            }
+        }
+        ksort($defaults);
+        return $defaults;
+    }
+
     public function stockBatches()
     {
         return $this->hasMany(StockBatch::class);

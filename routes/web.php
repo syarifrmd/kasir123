@@ -8,6 +8,7 @@ use App\Http\Controllers\StokController;
 use App\Http\Controllers\ProfitController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KategoriController;
 use Illuminate\Support\Facades\Route;
 
 // Lindungi seluruh aplikasi dengan auth, kecuali route auth.*
@@ -22,6 +23,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('barang', BarangController::class)->except(['show']);
     Route::resource('transaksi', TransaksiController::class)->only(['index','create','store','destroy']);
     Route::resource('vendors', VendorController::class)->except(['show']);
+    // Kategori (file-based, no DB table)
+    Route::get('/kategori', [KategoriController::class,'index'])->name('kategori.index');
+    Route::post('/kategori', [KategoriController::class,'store'])->name('kategori.store');
+    Route::put('/kategori/{kode}', [KategoriController::class,'update'])->name('kategori.update');
+    Route::delete('/kategori/{kode}', [KategoriController::class,'destroy'])->name('kategori.destroy');
 
     // Stok management
     Route::get('/stok', [StokController::class,'index'])->name('stok.index');

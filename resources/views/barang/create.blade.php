@@ -9,44 +9,19 @@
         <h3 class="font-semibold text-blue-900 mb-3">Pilih Kategori</h3>
         <div class="grid grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-medium mb-1">Kategori</label>
-                <select name="kategori" x-model="selectedKategori" @change="kategoriChanged()" class="w-full border rounded px-3 py-2 text-sm" required>
-                    @foreach(\App\Models\Barang::KATEGORI as $k => $label)
+                <label class="block text-sm font-medium mb-1">Kategori
+                    <a href="{{ route('kategori.index') }}" target="_blank" class="ml-2 text-xs text-blue-600 hover:underline">+ Tambah Kategori</a>
+                </label>
+                <select name="kategori" class="w-full border rounded px-3 py-2 text-sm" required>
+                    @foreach(\App\Models\Barang::kategoriOptions() as $k => $label)
                         <option value="{{ $k }}" {{ old('kategori') == $k ? 'selected' : '' }}>{{ $label }} ({{ $k }})</option>
                     @endforeach
-                    <option value="CUSTOM">Buat Kategori Baru</option>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1">Nama Merk Barang</label>
                 <input type="text" name="merk" value="{{ old('merk') }}" class="w-full border rounded px-3 py-2 text-sm" required placeholder="Contoh: Aqua, Indomie">
             </div>
-        </div>
-    </div>
-    
-    <!-- Form Kategori Baru (tampil jika pilih CUSTOM) -->
-    <div x-show="selectedKategori === 'CUSTOM'" x-transition class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-        <h3 class="font-semibold text-green-900 mb-3">Buat Kategori Baru</h3>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium mb-1 text-green-900">Kode Kategori <span class="text-red-500">*</span></label>
-                <input type="text" name="kategori" x-model="customKategoriCode" placeholder="Masukkan 2 huruf kapital, misal: PR" maxlength="2" pattern="[A-Z]{2}" class="w-full border-2 border-green-300 rounded px-3 py-2 text-sm font-mono uppercase focus:border-green-500 focus:ring-2 focus:ring-green-200" :required="selectedKategori === 'CUSTOM'">
-                <p class="text-xs text-gray-600 mt-1">Hanya 2 huruf kapital (A-Z)</p>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1 text-green-900">Nama Kategori <span class="text-gray-400">(opsional)</span></label>
-                <input type="text" name="kategori_nama" x-model="customKategoriNama" placeholder="Contoh: Perlengkapan" class="w-full border-2 border-green-300 rounded px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-200">
-                <p class="text-xs text-gray-600 mt-1">Untuk keterangan saja</p>
-            </div>
-        </div>
-        <div class="mt-3 bg-white border border-green-200 rounded p-3">
-            <p class="text-xs font-semibold text-green-900 mb-1">Contoh Kategori Baru:</p>
-            <ul class="text-xs text-gray-700 space-y-1">
-                <li>• <span class="font-mono font-bold">PR</span> - Perlengkapan Rumah</li>
-                <li>• <span class="font-mono font-bold">AP</span> - Alat Pertanian</li>
-                <li>• <span class="font-mono font-bold">KS</span> - Kosmetik</li>
-                <li>• <span class="font-mono font-bold">EL</span> - Elektronik</li>
-            </ul>
         </div>
     </div>
     <div>
@@ -110,55 +85,56 @@
         <p x-show="varians.length === 0" class="text-sm text-gray-500 text-center py-4">Belum ada varian. Klik tombol "Tambah Varian" untuk menambahkan.</p>
     </div>
     
-    <!-- Inisialisasi Stok Opsional -->
-    <div class="bg-white p-4 rounded shadow max-w-3xl mt-4">
-        <div class="flex items-center justify-between">
-            <h3 class="font-semibold">Inisialisasi Stok (Opsional, Berlaku untuk semua varian)</h3>
-            <label class="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" name="init_stock" value="1" x-model="init_stock" class="rounded"> Aktifkan
-            </label>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3" x-show="init_stock">
-            <div>
-                <label class="block text-xs font-medium mb-1">Vendor</label>
-                <select name="vendor_init_id" class="w-full border rounded px-3 py-2 text-sm">
-                    <option value="">-- Pilih Vendor --</option>
+    <!-- Vendor & Biaya (lebih sederhana, otomatis pakai stok varian) -->
+    <div class="bg-white p-4 rounded shadow max-w-3xl mt-4" x-data="{showVendorBaru:false}">
+        <h3 class="font-semibold mb-3">Vendor & Biaya (Opsional)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="md:col-span-1">
+                <label class="block text-xs font-medium mb-1">Pilih Vendor</label>
+                <select name="vendor_id" class="w-full border rounded px-3 py-2 text-sm">
+                    <option value="">-- Tidak Ada / Baru --</option>
                     @foreach(\App\Models\Vendor::orderBy('nama')->get() as $v)
                         <option value="{{ $v->id }}">{{ $v->kode ?? 'NO-CODE' }} • {{ $v->nama }}</option>
                     @endforeach
                 </select>
-                <p class="text-xs text-gray-500 mt-1">Atau isi vendor baru di bawah</p>
+                <button type="button" @click="showVendorBaru=!showVendorBaru" class="mt-2 text-xs text-blue-600 hover:underline" x-text="showVendorBaru ? 'Tutup form vendor baru' : 'Tambah vendor baru' "></button>
             </div>
-            <div>
-                <label class="block text-xs font-medium mb-1">Vendor Baru</label>
-                <input type="text" name="vendor_init_baru" class="w-full border rounded px-3 py-2 text-sm" placeholder="Nama vendor baru">
+            <div class="md:col-span-1">
+                <label class="block text-xs font-medium mb-1">HPP / Unit</label>
+                <input type="number" step="0.01" name="unit_cost" class="w-full border rounded px-3 py-2 text-sm" placeholder="0" value="{{ old('unit_cost') }}">
+                <p class="text-xs text-gray-500 mt-1">Dipakai untuk batch awal jika stok > 0</p>
             </div>
-            <div>
-                <label class="block text-xs font-medium mb-1">Kode Vendor (opsional)</label>
-                <input type="text" name="vendor_init_kode" class="w-full border rounded px-3 py-2 text-sm" placeholder="VND-XXXX (otomatis jika kosong)">
-            </div>
-            <div>
-                <label class="block text-xs font-medium mb-1">Alamat Vendor</label>
-                <input type="text" name="vendor_init_alamat" class="w-full border rounded px-3 py-2 text-sm" placeholder="Alamat vendor">
-            </div>
-            <div>
-                <label class="block text-xs font-medium mb-1">No Kontak</label>
-                <input type="text" name="vendor_init_no_kontak" class="w-full border rounded px-3 py-2 text-sm" placeholder="0812xxxx">
-            </div>
-            <div>
-                <label class="block text-xs font-medium mb-1">Nama Sales</label>
-                <input type="text" name="vendor_init_nama_sales" class="w-full border rounded px-3 py-2 text-sm" placeholder="Nama sales">
-            </div>
-            <div>
-                <label class="block text-xs font-medium mb-1">HPP/Unit</label>
-                <input type="number" step="0.01" name="unit_cost_init" class="w-full border rounded px-3 py-2 text-sm" placeholder="0">
-            </div>
-            <div>
-                <label class="block text-xs font-medium mb-1">Harga Jual Baru (opsional)</label>
-                <input type="number" step="0.01" name="harga_jual_baru_init" class="w-full border rounded px-3 py-2 text-sm" placeholder="Biarkan kosong jika tidak berubah">
+            <div class="md:col-span-1">
+                <label class="block text-xs font-medium mb-1">Catatan</label>
+                <input type="text" name="notes" class="w-full border rounded px-3 py-2 text-sm" placeholder="Contoh: Stok awal" value="{{ old('notes') }}">
             </div>
         </div>
-        <p class="text-xs text-gray-500 mt-2">Catatan: Qty awal diambil dari kolom "Stok" pada masing-masing varian.</p>
+        <div class="mt-4 border rounded p-3 bg-gray-50" x-show="showVendorBaru">
+            <h4 class="font-semibold text-xs mb-2">Data Vendor Baru</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-medium mb-1">Nama Vendor</label>
+                    <input type="text" name="vendor_baru" class="w-full border rounded px-3 py-2 text-sm" value="{{ old('vendor_baru') }}">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">Kode Vendor</label>
+                    <input type="text" name="vendor_kode" class="w-full border rounded px-3 py-2 text-sm" value="{{ old('vendor_kode') }}" placeholder="VND-XXX">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">No Kontak</label>
+                    <input type="text" name="vendor_no_kontak" class="w-full border rounded px-3 py-2 text-sm" value="{{ old('vendor_no_kontak') }}">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">Alamat</label>
+                    <input type="text" name="vendor_alamat" class="w-full border rounded px-3 py-2 text-sm" value="{{ old('vendor_alamat') }}">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">Nama Sales</label>
+                    <input type="text" name="vendor_nama_sales" class="w-full border rounded px-3 py-2 text-sm" value="{{ old('vendor_nama_sales') }}">
+                </div>
+            </div>
+        </div>
+        <p class="text-xs text-gray-500 mt-3">Stok awal diambil langsung dari kolom "Stok" tiap varian dan otomatis dibuat batch & movement jika nilainya > 0.</p>
     </div>
 
     <div class="flex gap-2 pt-4">
@@ -167,43 +143,34 @@
     </div>
 </form>
 
+    <!-- Info tambahkan kategori di menu khusus -->
+    <div class="bg-amber-50 border-l-4 border-amber-500 p-3 rounded">
+        <p class="text-xs text-amber-800">Butuh kategori baru? Tambahkan dari menu Kategori.</p>
+    </div>
+
 <script>
 function barangForm() {
     return {
-        init_stock: false,
-        selectedKategori: '{{ old("kategori", "RK") }}',
-        customKategoriCode: '',
-        customKategoriNama: '',
         varians: [{jenis: '', kode_jenis: '01', kode_kemasan: '01', ukuran_kemasan: '', harga_barang: 0, stok_barang: 0, manual_kode: false, kode_barang_manual: ''}],
-        kategoriChanged() {
-            if (this.selectedKategori !== 'CUSTOM') {
-                this.customKategoriCode = '';
-                this.customKategoriNama = '';
-            }
-        },
         addVarian() {
-            // Find max kode_jenis and kode_kemasan for auto increment
             let maxJenis = 0;
             let maxKemasan = 0;
-            
             this.varians.forEach(v => {
                 let jenis = parseInt(v.kode_jenis || '0');
                 let kemasan = parseInt(v.kode_kemasan || '0');
                 if (jenis > maxJenis) maxJenis = jenis;
                 if (kemasan > maxKemasan) maxKemasan = kemasan;
             });
-            
             let nextJenis = String(maxJenis).padStart(2, '0');
             let nextKemasan = String(maxKemasan + 1).padStart(2, '0');
-            
             this.varians.push({
-                jenis: '', 
-                kode_jenis: nextJenis, 
-                kode_kemasan: nextKemasan, 
-                ukuran_kemasan: '', 
-                harga_barang: 0, 
-                stok_barang: 0, 
-                manual_kode: false, 
+                jenis: '',
+                kode_jenis: nextJenis,
+                kode_kemasan: nextKemasan,
+                ukuran_kemasan: '',
+                harga_barang: 0,
+                stok_barang: 0,
+                manual_kode: false,
                 kode_barang_manual: ''
             });
         },

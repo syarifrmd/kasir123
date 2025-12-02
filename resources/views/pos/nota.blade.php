@@ -227,14 +227,14 @@
         
         <!-- Items -->
         <div class="items">
-            @foreach($transaksi->items as $item)
-                    <div class="item">
-                        <div class="item-name">{{ strtoupper($item->barang->merk ?? '-') }} {{ strtoupper($item->barang->jenis ?? '') }}</div>
-                        <div class="item-detail">
-                            <span>{{ $item->barang->ukuran_kemasan ?? '-' }} x {{ $item->qty }} @ Rp {{ number_format($item->harga_satuan,0,',','.') }}</span>
-                            <span>Rp {{ number_format($item->subtotal,0,',','.') }}</span>
-                        </div>
+            @foreach($items as $item)
+                <div class="item">
+                    <div class="item-name">{{ strtoupper($item->merk ?? '-') }} {{ strtoupper($item->jenis ?? '') }}</div>
+                    <div class="item-detail">
+                        <span>{{ $item->ukuran_kemasan ?? '-' }} x {{ $item->qty }} @ Rp {{ number_format($item->harga_satuan,0,',','.') }}</span>
+                        <span>Rp {{ number_format($item->subtotal,0,',','.') }}</span>
                     </div>
+                </div>
             @endforeach
         </div>
         
@@ -244,11 +244,11 @@
         <div class="summary">
             <div class="summary-row">
                 <span>Jml Brg:</span>
-                <span>{{ $transaksi->items->sum('qty') }}</span>
+                <span>{{ $items->sum('qty') }}</span>
             </div>
             <div class="summary-row">
                 <span>Jml Item:</span>
-                <span>{{ $transaksi->items->count() }}</span>
+                <span>{{ $items->count() }}</span>
             </div>
         </div>
         

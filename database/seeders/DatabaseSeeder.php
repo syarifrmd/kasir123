@@ -35,9 +35,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Seed initial barang data
-        $this->call([
-            BarangSeeder::class,
-        ]);
+        // Tidak ada seed kategori karena kategori disimpan di kolom tabel barang
+
+        // (Opsional) BarangSeeder dinonaktifkan sementara karena struktur barang terkini berbeda
+        // Aktifkan kembali setelah menyesuaikan seeder dengan skema terbaru
+        // $this->call([
+        //     BarangSeeder::class,
+        // ]);
     }
 }
