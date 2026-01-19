@@ -17,9 +17,19 @@ return new class extends Migration
             $table->decimal('qty_remaining', 15, 3)->default(0)->change();
         });
 
-        Schema::table('transaksi', function (Blueprint $table) {
-            $table->decimal('qty', 15, 3)->default(0)->change();
-        });
+        // Fixed: Use 'transaksi_items' instead of 'transaksi'
+        if (Schema::hasTable('transaksi_items')) {
+            Schema::table('transaksi_items', function (Blueprint $table) {
+                $table->decimal('qty', 15, 3)->default(0)->change();
+            });
+        }
+
+        // Added: Also update stock_movements if it exists
+        if (Schema::hasTable('stock_movements')) {
+            Schema::table('stock_movements', function (Blueprint $table) {
+                 $table->decimal('qty', 15, 3)->default(0)->change();
+            });
+        }
     }
 
     public function down(): void
@@ -34,8 +44,16 @@ return new class extends Migration
             $table->integer('qty_remaining')->default(0)->change();
         });
 
-        Schema::table('transaksi', function (Blueprint $table) {
-            $table->integer('qty')->default(0)->change();
-        });
+        if (Schema::hasTable('transaksi_items')) {
+            Schema::table('transaksi_items', function (Blueprint $table) {
+                $table->integer('qty')->default(0)->change();
+            });
+        }
+
+        if (Schema::hasTable('stock_movements')) {
+            Schema::table('stock_movements', function (Blueprint $table) {
+                $table->integer('qty')->default(0)->change();
+            });
+        }
     }
 };
