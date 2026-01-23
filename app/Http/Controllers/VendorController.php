@@ -2,27 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Vendor;
 use Illuminate\Http\Request;
+use App\Models\Kontak;
 
 class VendorController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Vendor::query();
+        $query = Kontak::query()->vendor(); // Scope defined in Model
+
         if ($request->filled('q')) {
-            $q = trim($request->q);
-            $query->where(function($w) use ($q){
-                $w->where('nama','like',"%$q%")
-                  ->orWhere('kode','like',"%$q%")
-                  ->orWhere('nama_sales','like',"%$q%")
-                  ->orWhere('no_kontak','like',"%$q%")
-                  ->orWhere('telepon','like',"%$q%")
-                  ->orWhere('alamat','like',"%$q%")
-                  ->orWhere('kontak','like',"%$q%");
-            });
+            $query->where('name', 'like', '%' . $request->q . '%');
         }
-        $vendors = $query->orderBy('nama')->paginate(30)->withQueryString();
+
+        $vendors = $query->paginate(20);
+
         return view('vendors.index', compact('vendors'));
     }
 
@@ -33,47 +27,33 @@ class VendorController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'kode' => 'nullable|string|max:20|unique:vendors,kode',
-            'nama' => 'required|string|max:255',
-            'alamat' => 'nullable|string|max:255',
-            'kontak' => 'nullable|string|max:255',
-            'telepon' => 'nullable|string|max:30',
-            'no_kontak' => 'nullable|string|max:30',
-            'nama_sales' => 'nullable|string|max:100',
+        $request->validate(['name' => 'required']);
+        
+        Kontak::create([
+            'name' => $request->name,
+            'tipe' => 'VENDOR',
+            'hp'   => $request->hp,
+            'alamat'=> $request->alamat
         ]);
-        Vendor::create($data);
-        return redirect()->route('vendors.index')->with('success','Vendor berhasil ditambahkan');
+
+        return redirect()->route('vendors.index')->with('success', 'Vendor berhasil ditambahkan');
     }
 
-    public function edit(Vendor $vendor)
+    public function edit(Kontak $vendor)
     {
         return view('vendors.edit', compact('vendor'));
     }
 
-    public function update(Request $request, Vendor $vendor)
+    public function update(Request $request, Kontak $vendor)
     {
-        $data = $request->validate([
-            'kode' => 'nullable|string|max:20|unique:vendors,kode,' . $vendor->id,
-            'nama' => 'required|string|max:255',
-            'alamat' => 'nullable|string|max:255',
-            'kontak' => 'nullable|string|max:255',
-            'telepon' => 'nullable|string|max:30',
-            'no_kontak' => 'nullable|string|max:30',
-            'nama_sales' => 'nullable|string|max:100',
-        ]);
-        $vendor->update($data);
-        return redirect()->route('vendors.index')->with('success','Vendor berhasil diperbarui');
+        $request->validate(['name' => 'required']);
+        $vendor->update($request->only('name','hp','alamat'));
+        return redirect()->route('vendors.index')->with('success', 'Vendor updated');
     }
-
-    public function destroy(Vendor $vendor)
+    
+    public function destroy(Kontak $vendor)
     {
-        // Optional: check relations (stock batches)
-        $hasBatches = $vendor->batches()->exists();
-        if ($hasBatches) {
-            return redirect()->route('vendors.index')->with('error','Tidak dapat menghapus vendor karena sudah digunakan pada batch stok.');
-        }
         $vendor->delete();
-        return redirect()->route('vendors.index')->with('success','Vendor berhasil dihapus');
+        return back()->with('success', 'Vendor deleted');
     }
 }

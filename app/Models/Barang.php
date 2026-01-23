@@ -13,58 +13,22 @@ class Barang extends Model
 
     protected $fillable = [
         'kode_barang',
-        'kategori',
+        'nama_barang',
         'merk',
-        'jenis',
-        'ukuran_kemasan',
-        'harga_barang',
-        'stok_barang',
-        'deskripsi',
+        'ukuran',
+        'kategori',
+        'satuan',
+        'harga_jual',
+        'stok',
     ];
 
-    // Kategori constants
-    public const KATEGORI = [
-        'RK' => 'Rokok',
-        'MN' => 'Minuman',
-        'SB' => 'Sembako',
-        'SK' => 'Snack',
-        'OB' => 'Obat',
-        'EK' => 'Elektronik',
+    protected $casts = [
+        'harga_jual' => 'decimal:2',
+        'stok' => 'decimal:3',
     ];
 
-    public static function kategoriOptions(): array
+    public function history()
     {
-        $defaults = self::KATEGORI;
-        $path = storage_path('app/kategori.json');
-        if (is_file($path)) {
-            try {
-                $json = json_decode(file_get_contents($path), true) ?: [];
-                if (is_array($json)) {
-                    // Expect associative [kode => nama]
-                    foreach ($json as $k => $v) {
-                        if (is_string($k) && is_string($v) && preg_match('/^[A-Z]{2}$/', $k)) {
-                            $defaults[$k] = $v;
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                // ignore and use defaults
-            }
-        }
-        ksort($defaults);
-        return $defaults;
+        return $this->hasMany(TransaksiLedger::class);
     }
-
-    public function stockBatches()
-    {
-        return $this->hasMany(StockBatch::class);
-    }
-
-    public function stockMovements()
-    {
-        return $this->hasMany(StockMovement::class);
-    }
-
-    // Flattened model: no details relation
-    // kode_barang generation handled in controller
 }

@@ -1,169 +1,114 @@
 @extends('layouts.kasir')
 @section('title','Edit Barang')
 @section('content')
-<h1 class="text-xl font-semibold mb-4">Edit Barang</h1>
-<form action="{{ route('barang.update',$barang) }}" method="POST" class="space-y-4 bg-white p-6 rounded shadow max-w-3xl" x-data="barangForm()">
-    @csrf @method('PUT')
-    <!-- Pilih Kategori -->
-    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-        <h3 class="font-semibold text-blue-900 mb-3">Pilih Kategori</h3>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium mb-1">Kategori
-                    <a href="{{ route('kategori.index') }}" target="_blank" class="ml-2 text-xs text-blue-600 hover:underline">+ Tambah Kategori</a>
-                </label>
-                <select name="kategori" class="w-full border rounded px-3 py-2 text-sm" required>
-                    @foreach(\App\Models\Barang::kategoriOptions() as $k => $label)
-                        <option value="{{ $k }}" {{ old('kategori', $barang->kategori) == $k ? 'selected' : '' }}>{{ $label }} ({{ $k }})</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">Nama Merk Barang</label>
-                <input type="text" name="merk" value="{{ old('merk',$barang->merk) }}" class="w-full border rounded px-3 py-2 text-sm" required>
-            </div>
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2 text-gray-500 text-sm">
+            <a href="{{ route('barang.index') }}" class="hover:text-blue-600">Barang</a>
+            <span>/</span>
+            <span class="text-gray-800 font-medium">Edit Barang</span>
         </div>
+        <a href="{{ route('barang.index') }}" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300">
+            Kembali
+        </a>
     </div>
-    <div>
-        <label class="block text-sm font-medium mb-1">Deskripsi</label>
-        <textarea name="deskripsi" rows="2" class="w-full border rounded px-3 py-2 text-sm">{{ old('deskripsi',$barang->deskripsi) }}</textarea>
-    </div>
-    
-    <hr class="my-4">
-    <div class="flex justify-between items-center mb-2">
-        <h3 class="font-medium">Varian Jenis & Kemasan</h3>
-        <button type="button" @click="addVarian()" class="text-sm px-3 py-1 bg-green-600 text-white rounded">+ Tambah Varian</button>
-    </div>
-    
-    <div class="space-y-3">
-        <template x-for="(varian, index) in varians" :key="index">
-            <div class="border p-3 rounded" :class="varian.id ? 'bg-blue-50' : 'bg-gray-50'">
-                <input type="hidden" :name="'varians['+index+'][id]'" x-model="varian.id">
-                <div class="grid grid-cols-12 gap-3 items-end mb-2">
-                    <div class="col-span-2">
-                        <label class="block text-xs font-medium mb-1">Nama Jenis</label>
-                        <input type="text" :name="'varians['+index+'][jenis]'" x-model="varian.jenis" class="w-full border rounded px-2 py-1 text-sm" required placeholder="Botol">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-medium mb-1">Kode Jenis</label>
-                        <input type="text" :name="'varians['+index+'][kode_jenis]'" x-model="varian.kode_jenis" class="w-full border rounded px-2 py-1 text-sm" maxlength="2" placeholder="01">
-                        <p class="text-xs text-gray-400">2 digit (01-99)</p>
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-medium mb-1">Kode Kemasan</label>
-                        <input type="text" :name="'varians['+index+'][kode_kemasan]'" x-model="varian.kode_kemasan" class="w-full border rounded px-2 py-1 text-sm" maxlength="2" placeholder="01">
-                        <p class="text-xs text-gray-400">2 digit (01-99)</p>
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-medium mb-1">Ukuran/Kemasan</label>
-                        <input type="text" :name="'varians['+index+'][ukuran_kemasan]'" x-model="varian.ukuran_kemasan" class="w-full border rounded px-2 py-1 text-sm" required>
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-medium mb-1">Harga</label>
-                        <input type="number" :name="'varians['+index+'][harga_barang]'" x-model="varian.harga_barang" class="w-full border rounded px-2 py-1 text-sm" required>
-                    </div>
-                    <div class="col-span-1">
-                        <label class="block text-xs font-medium mb-1">Stok</label>
-                        <input type="number" :name="'varians['+index+'][stok_barang]'" x-model="varian.stok_barang" class="w-full border rounded px-2 py-1 text-sm" required>
-                    </div>
-                    <div class="col-span-1">
-                        <button type="button" @click="removeVarian(index)" class="w-full px-2 py-1 bg-red-600 text-white rounded text-xs">Hapus</button>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 mb-2">
-                    <label class="flex items-center gap-2 text-xs cursor-pointer">
-                        <input type="checkbox" x-model="varian.manual_kode" class="rounded">
-                        <span>Override Kode Barang Manual</span>
-                    </label>
-                    <span x-show="varian.id && !varian.manual_kode" class="text-xs text-gray-500">
-                        Kode Saat Ini: <span class="font-mono" x-text="varian.kode_barang"></span>
-                    </span>
-                </div>
-                <div x-show="varian.manual_kode">
-                    <label class="block text-xs font-medium mb-1">Kode Barang (8 digit)</label>
-                    <input type="text" :name="'varians['+index+'][kode_barang_manual]'" x-model="varian.kode_barang_manual" class="w-full border rounded px-2 py-1 text-sm font-mono" maxlength="8" placeholder="MN010101">
-                    <p class="text-xs text-gray-500 mt-1">Kosongkan untuk auto-generate dari kode jenis & kemasan</p>
-                </div>
+
+    <div class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-6 py-4 rounded-t-lg">
+            <h2 class="text-xl font-bold">Edit: {{ $barang->nama_barang }}</h2>
+            <p class="text-orange-100 text-sm mt-1">Perbarui informasi barang</p>
+        </div>
+        
+        <form action="{{ route('barang.update', $barang->id) }}" method="POST" class="p-6">
+            @csrf
+            @method('PUT')
+            
+            <div class="overflow-x-auto border-2 border-gray-200 rounded-lg">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100 border-b-2">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-bold text-gray-700 w-1/4">Field</th>
+                            <th class="px-4 py-3 text-left font-bold text-gray-700">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr class="hover:bg-blue-50">
+                            <td class="px-4 py-3 font-semibold text-gray-700">Kode Barang</td>
+                            <td class="px-4 py-3">
+                                <div class="font-mono font-bold text-blue-700 bg-blue-50 px-3 py-2 rounded border inline-block">{{ $barang->kode_barang }}</div>
+                                <p class="text-xs text-gray-400 mt-1">Kode tidak dapat diubah</p>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-blue-50">
+                            <td class="px-4 py-3 font-semibold text-gray-700">Nama Barang <span class="text-red-500">*</span></td>
+                            <td class="px-4 py-3">
+                                <input type="text" name="nama_barang" value="{{ old('nama_barang', $barang->nama_barang) }}" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none" required>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-blue-50">
+                            <td class="px-4 py-3 font-semibold text-gray-700">Merk / Brand</td>
+                            <td class="px-4 py-3">
+                                <input type="text" name="merk" value="{{ old('merk', $barang->merk) }}" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none">
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-blue-50">
+                            <td class="px-4 py-3 font-semibold text-gray-700">Varian / Ukuran</td>
+                            <td class="px-4 py-3">
+                                <input type="text" name="ukuran" value="{{ old('ukuran', $barang->ukuran) }}" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none">
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-blue-50">
+                            <td class="px-4 py-3 font-semibold text-gray-700">Kategori <span class="text-red-500">*</span></td>
+                            <td class="px-4 py-3">
+                                <select name="kategori" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none" required>
+                                    <option value="RK" {{ $barang->kategori == 'RK' ? 'selected' : '' }}>RK - Rokok</option>
+                                    <option value="SB" {{ $barang->kategori == 'SB' ? 'selected' : '' }}>SB - Sembako</option>
+                                    <option value="MN" {{ $barang->kategori == 'MN' ? 'selected' : '' }}>MN - Minuman</option>
+                                    <option value="SK" {{ $barang->kategori == 'SK' ? 'selected' : '' }}>SK - Snack</option>
+                                    <option value="OB" {{ $barang->kategori == 'OB' ? 'selected' : '' }}>OB - Obat</option>
+                                    <option value="EK" {{ $barang->kategori == 'EK' ? 'selected' : '' }}>EK - Elektronik</option>
+                                    <option value="LL" {{ $barang->kategori == 'LL' ? 'selected' : '' }}>LL - Lain-lain</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-blue-50">
+                            <td class="px-4 py-3 font-semibold text-gray-700">Satuan <span class="text-red-500">*</span></td>
+                            <td class="px-4 py-3">
+                                <input type="text" name="satuan" value="{{ old('satuan', $barang->satuan) }}" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none" required>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-blue-50">
+                            <td class="px-4 py-3 font-semibold text-gray-700">Harga Jual (Rp) <span class="text-red-500">*</span></td>
+                            <td class="px-4 py-3">
+                                <input type="number" name="harga_jual" value="{{ old('harga_jual', $barang->harga_jual) }}" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none" required>
+                            </td>
+                        </tr>
+                        <tr class="bg-yellow-50">
+                            <td class="px-4 py-3 font-semibold text-gray-700">Stok Saat Ini</td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="font-bold text-2xl text-gray-800">{{ $barang->stok + 0 }}</span>
+                                    <span class="text-gray-600">{{ $barang->satuan }}</span>
+                                    <span class="text-xs text-blue-600 bg-blue-100 px-3 py-1 rounded-full font-medium">Auto-managed</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">💡 Untuk mengubah stok, gunakan menu <strong>Manajemen Stok</strong></p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-        </template>
-        <p x-show="varians.length === 0" class="text-sm text-gray-500 text-center py-4">Belum ada varian.</p>
+            
+            <div class="mt-6 flex justify-end gap-3 pt-4 border-t">
+                <a href="{{ route('barang.index') }}" class="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    Batal
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-bold flex items-center gap-2 shadow-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Update Barang
+                </button>
+            </div>
+        </form>
     </div>
-    
-    <div class="flex gap-2 pt-4">
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded text-sm">Update</button>
-        <a href="{{ route('barang.index') }}" class="px-4 py-2 bg-gray-200 rounded text-sm">Batal</a>
-    </div>
-</form>
-
-    <!-- Info tambahkan kategori di menu khusus -->
-    <div class="bg-amber-50 border-l-4 border-amber-500 p-3 rounded">
-        <p class="text-xs text-amber-800">Butuh kategori baru? Tambahkan dari menu Kategori.</p>
-    </div>
-
-<script>
-function barangForm() {
-    return {
-        varians: {!! json_encode($varians->map(function($v) {
-            // Extract kode_jenis (posisi 5-6 untuk legacy 9-digit; 4-5 untuk 8-digit). Gunakan offset dinamis.
-            $len = strlen($v->kode_barang);
-            if ($len >= 8) {
-                // New 8-digit: KK(2) + MM(2) + JJ(2) + KKEM(2)
-                $kodeJenis = substr($v->kode_barang, 4, 2);
-                $kodeKemasan = substr($v->kode_barang, 6, 2);
-            } else {
-                $kodeJenis = '';
-                $kodeKemasan = '';
-            }
-            
-            return [
-                'id' => $v->id,
-                'jenis' => $v->jenis,
-                'kode_jenis' => $kodeJenis,
-                'kode_kemasan' => $kodeKemasan,
-                'ukuran_kemasan' => $v->ukuran_kemasan,
-                'harga_barang' => $v->harga_barang,
-                'stok_barang' => $v->stok_barang,
-                'kode_barang' => $v->kode_barang,
-                'manual_kode' => false,
-                'kode_barang_manual' => ''
-            ];
-        })->values()) !!},
-        addVarian() {
-            // Find max kode_jenis and kode_kemasan for auto increment
-            let maxJenis = 0;
-            let maxKemasan = 0;
-            
-            this.varians.forEach(v => {
-                let jenis = parseInt(v.kode_jenis || '0');
-                let kemasan = parseInt(v.kode_kemasan || '0');
-                if (jenis > maxJenis) maxJenis = jenis;
-                if (kemasan > maxKemasan) maxKemasan = kemasan;
-            });
-            
-            let nextJenis = String(maxJenis).padStart(2, '0');
-            let nextKemasan = String(maxKemasan + 1).padStart(2, '0');
-            
-            this.varians.push({
-                id: null, 
-                jenis: '', 
-                kode_jenis: nextJenis, 
-                kode_kemasan: nextKemasan, 
-                ukuran_kemasan: '', 
-                harga_barang: 0, 
-                stok_barang: 0, 
-                kode_barang: '', 
-                manual_kode: false, 
-                kode_barang_manual: ''
-            });
-        },
-        removeVarian(index) {
-            if (this.varians.length > 1) {
-                this.varians.splice(index, 1);
-            } else {
-                alert('Minimal harus ada 1 varian');
-            }
-        }
-    }
-}
-</script>
+</div>
 @endsection

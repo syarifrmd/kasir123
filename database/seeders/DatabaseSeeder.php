@@ -3,9 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Database\Seeders\BarangSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,33 +12,33 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        // Default pegawai (admin kasir) untuk login awal
+        // 1. Create Admin
         User::updateOrCreate(
             ['email' => 'admin@kasir.local'],
             [
-                'name' => 'Admin Kasir',
-                'password' => bcrypt('password123'),
+                'name' => 'Super Admin',
+                'password' => bcrypt('password'),
+                'role' => 'admin',
                 'email_verified_at' => now(),
             ]
         );
 
+        // 2. Create Kasir
         User::updateOrCreate(
-            ['email' => 'pegawai@kasir.local'],
+            ['email' => 'kasir@kasir.local'],
             [
-                'name' => 'Pegawai Kasir',
-                'password' => bcrypt('password123'),
+                'name' => 'Kasir Utama',
+                'password' => bcrypt('password'),
+                'role' => 'kasir',
                 'email_verified_at' => now(),
             ]
         );
 
-        // Tidak ada seed kategori karena kategori disimpan di kolom tabel barang
-
-        // (Opsional) BarangSeeder dinonaktifkan sementara karena struktur barang terkini berbeda
-        // Aktifkan kembali setelah menyesuaikan seeder dengan skema terbaru
-        // $this->call([
-        //     BarangSeeder::class,
-        // ]);
+        // Call other seeders
+        $this->call([
+            KontakSeeder::class,
+            BarangSeeder::class,
+            TransaksiSeeder::class,
+        ]);
     }
 }

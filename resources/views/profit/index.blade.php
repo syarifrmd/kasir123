@@ -1,53 +1,42 @@
 @extends('layouts.kasir')
-@section('title','Ringkasan Keuntungan')
+@section('title','Profit & Loss')
 @section('content')
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-xl font-semibold">Ringkasan Keuntungan</h1>
-    <form method="GET" class="flex items-center gap-2 text-sm">
-        <input type="date" name="start" value="{{ $start }}" class="border rounded px-2 py-1">
-        <span>-</span>
-        <input type="date" name="end" value="{{ $end }}" class="border rounded px-2 py-1">
-        <button class="px-3 py-1.5 rounded bg-rose-600 text-white">Filter</button>
+<h1 class="text-2xl font-bold mb-6">Laporan Profit & Loss (Cash Flow)</h1>
+
+<!-- Filter -->
+<div class="bg-white p-4 rounded shadow mb-6">
+    <form method="GET" class="flex gap-4 items-end">
+        <div>
+            <label class="block text-sm text-gray-500 mb-1">Dari</label>
+            <input type="date" name="start" value="{{ $start }}" class="border rounded px-3 py-2">
+        </div>
+        <div>
+            <label class="block text-sm text-gray-500 mb-1">Sampai</label>
+            <input type="date" name="end" value="{{ $end }}" class="border rounded px-3 py-2">
+        </div>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Tampilkan</button>
     </form>
 </div>
 
-<div class="bg-white rounded shadow overflow-hidden">
-    <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="px-3 py-2 text-left">Tanggal</th>
-                <th class="px-3 py-2 text-right">Penjualan</th>
-                <th class="px-3 py-2 text-right">HPP</th>
-                <th class="px-3 py-2 text-right">Profit</th>
-                <th class="px-3 py-2 text-right">Item</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y">
-            @php($totalPenjualan = 0)
-            @php($totalHpp = 0)
-            @php($totalProfit = 0)
-            @foreach($rows as $r)
-                @php($totalPenjualan += $r->penjualan)
-                @php($totalHpp += $r->hpp)
-                @php($totalProfit += $r->profit)
-                <tr>
-                    <td class="px-3 py-2">{{ \Carbon\Carbon::parse($r->tanggal)->format('d M Y') }}</td>
-                    <td class="px-3 py-2 text-right">Rp {{ number_format($r->penjualan,0,',','.') }}</td>
-                    <td class="px-3 py-2 text-right">Rp {{ number_format($r->hpp,0,',','.') }}</td>
-                    <td class="px-3 py-2 text-right font-semibold text-rose-700">Rp {{ number_format($r->profit,0,',','.') }}</td>
-                    <td class="px-3 py-2 text-right">{{ $r->item_count }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr class="bg-gray-50 font-semibold">
-                <td class="px-3 py-2 text-right">Total</td>
-                <td class="px-3 py-2 text-right">Rp {{ number_format($totalPenjualan,0,',','.') }}</td>
-                <td class="px-3 py-2 text-right">Rp {{ number_format($totalHpp,0,',','.') }}</td>
-                <td class="px-3 py-2 text-right text-rose-700">Rp {{ number_format($totalProfit,0,',','.') }}</td>
-                <td class="px-3 py-2 text-right"></td>
-            </tr>
-        </tfoot>
-    </table>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white p-6 rounded shadow border-t-4 border-green-500">
+        <h3 class="text-gray-500 font-medium mb-2">Penjualan (Cash IN)</h3>
+        <p class="text-3xl font-bold text-green-600">+ Rp {{ number_format($omset, 0, ',', '.') }}</p>
+        <p class="text-sm text-gray-400 mt-2">Total 'KELUAR' amount</p>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow border-t-4 border-red-500">
+        <h3 class="text-gray-500 font-medium mb-2">Pembelian (Cash OUT)</h3>
+        <p class="text-3xl font-bold text-red-600">- Rp {{ number_format($pembelian, 0, ',', '.') }}</p>
+        <p class="text-sm text-gray-400 mt-2">Total 'MASUK' amount</p>
+    </div>
+
+    <div class="bg-gray-800 p-6 rounded shadow border-t-4 {{ $grossProfit >= 0 ? 'border-blue-400' : 'border-orange-500' }}">
+        <h3 class="text-gray-400 font-medium mb-2">Cash Flow Bersih</h3>
+        <p class="text-3xl font-bold {{ $grossProfit >= 0 ? 'text-blue-400' : 'text-orange-400' }}">
+            Rp {{ number_format($grossProfit, 0, ',', '.') }}
+        </p>
+        <p class="text-sm text-gray-500 mt-2">Selisih Masuk & Keluar</p>
+    </div>
 </div>
 @endsection
